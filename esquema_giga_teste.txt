@@ -1,0 +1,175 @@
+============================================================
+  GIGA DE TESTE - PLACA INCAI KSF8S V01
+  Esquema de Ligação na Bancada
+============================================================
+
+1. ALIMENTAÇÃO
+==============
+
+  Fonte 5V (pode ser USB do Arduino ou fonte separada)
+  ┌─────────┐
+  │ +5V     │────► VCC lógica da placa (pino VCC do conector)
+  │ GND     │────► GND da placa
+  └─────────┘
+
+  Fonte 12V ou 24V (depende da tensão da máquina CNC)
+  ┌─────────┐
+  │ +12/24V │────► VCC potência (alimentação dos TIP100)
+  │ GND     │────► GND da placa (comum)
+  └─────────┘
+
+  DICA: Use uma fonte de bancada com limite de corrente!
+        Comece com limite em 500mA e aumente conforme necessário.
+
+
+2. ARDUINO -> PLACA (sinais de controle)
+========================================
+
+  Arduino          Placa KSF8S (CD4099BE)
+  ────────         ─────────────────────
+  Pin 2  ────────► A0   (pino 10 do CD4099)
+  Pin 3  ────────► A1   (pino 11 do CD4099)
+  Pin 4  ────────► A2   (pino 12 do CD4099)
+  Pin 5  ────────► DATA (pino 13 do CD4099)
+  Pin 6  ────────► WE   (pino 1 do CD4099)
+  GND    ────────► GND  (pino 8 do CD4099)
+
+  NOTA: Precisa identificar quais pinos do conector de borda
+        vão para esses pinos do CD4099. Trace com multímetro
+        no modo continuidade do conector até o CI.
+
+
+3. CARGAS DE TESTE (saídas dos TIP100)
+======================================
+
+  Para cada saída do TIP100 (8 canais), use LEDs como indicador:
+
+        +12V (ou +24V)
+          │
+          ├── Resistor 1K (para 12V) ou 2.2K (para 24V)
+          │
+          ├── LED (qualquer cor)
+          │
+          └── Coletor do TIP100
+               │
+              Emissor ──► GND
+
+  Esquema para CADA canal:
+
+  +Vcc ──►──[R 1K]──►──[LED]──►──┤Coletor TIP100
+                                   │
+                                  Emissor──► GND
+
+  OU mais simples - use lâmpadas 12V de painel/carro (mais visual)
+
+  OU use um módulo de 8 relés como carga real de teste
+
+
+4. PONTOS DE MEDIÇÃO COM OSCILOSCÓPIO
+=====================================
+
+  Hantek 6022BE - 2 canais:
+
+  TESTE A: Verificar latch CD4099
+  ─────────────────────────────────
+  CH1 (amarelo) = Pino WE (pino 1 do CD4099)
+  CH2 (azul)    = Qualquer saída Q0-Q7 (pinos 2-7,14,15)
+  Trigger: CH1, borda de subida
+  → Você deve ver a saída mudar quando WE pulsa
+
+  TESTE B: Verificar optoacoplador TIL113
+  ─────────────────────────────────────────
+  CH1 (amarelo) = Entrada do TIL113 (pino 1, ânodo do LED)
+  CH2 (azul)    = Saída do TIL113 (pino 5, coletor)
+  → Mede o atraso de propagação (~5-10us)
+
+  TESTE C: Verificar transistor TIP100
+  ─────────────────────────────────────
+  CH1 (amarelo) = Base do TIP100
+  CH2 (azul)    = Coletor do TIP100 (USAR PONTA 10x!)
+  → Quando base sobe, coletor deve ir pra ~0V (saturação)
+
+  TESTE D: Visão geral entrada→saída
+  ───────────────────────────────────
+  CH1 (amarelo) = Pino DATA do Arduino (pin 5)
+  CH2 (azul)    = Coletor de um TIP100 (PONTA 10x)
+  → Mostra o atraso total do sistema
+
+
+5. PROCEDIMENTO DE TESTE
+=========================
+
+  Passo 1: Sem alimentação, verificar com multímetro:
+           - Continuidade entre GND do conector e pino 8 do CD4099
+           - Identificar pinos VCC e sinais no conector de borda
+           - Verificar se não há curto entre VCC e GND
+
+  Passo 2: Alimentar só 5V (lógica), sem carga:
+           - Medir corrente de repouso (<50mA esperado)
+           - Verificar 5V no pino 16 do CD4099
+
+  Passo 3: Conectar Arduino, rodar teste sequencial (opção 1):
+           - Medir com osciloscópio nos pontos TESTE A
+           - Verificar se o latch está funcionando
+
+  Passo 4: Alimentar lado de potência (12/24V) com LEDs de carga:
+           - Limite corrente na fonte (500mA)
+           - Rodar teste sequencial
+           - Cada LED deve acender em sequência
+
+  Passo 5: Usar modo pulso (opção 5) para medir com osciloscópio:
+           - Verificar tempos de resposta
+           - Medir TESTE B e TESTE C
+
+
+6. PINAGEM DOS CIs (REFERÊNCIA)
+================================
+
+  CD4099BE (Latch 8 bits endereçável):
+  ┌──────┐
+  1  WE    │     │ 16 VCC (+5V)
+  2  Q0    │     │ 15 Q7
+  3  Q1    │     │ 14 Q6
+  4  Q2    │     │ 13 DATA
+  5  Q3    │     │ 12 A2
+  6  Q4    │     │ 11 A1
+  7  Q5    │     │ 10 A0
+  8  GND   │     │  9 RESET
+  └──────┘
+
+  TIL113 (Optoacoplador Darlington):
+  ┌──────┐
+  1  Ânodo LED   │     │ 6 NC
+  2  Cátodo LED  │     │ 5 Coletor
+  3  NC          │     │ 4 Emissor
+  └──────┘
+
+  TIP100 (Darlington NPN):
+  ┌─────┐
+  │     │  1 = Base
+  │     │  2 = Coletor
+  │     │  3 = Emissor
+  └─────┘
+  (visto de frente, com marcação pra cima)
+
+
+7. MAPEAMENTO DO CONECTOR DE BORDA
+====================================
+
+  IMPORTANTE: Você precisa mapear os pinos do conector de borda
+  com o multímetro no modo continuidade.
+
+  Identifique:
+  [ ] Pino de VCC (+5V) - vai pro pino 16 do CD4099
+  [ ] Pino de GND - vai pro pino 8 do CD4099
+  [ ] Pino A0 - vai pro pino 10 do CD4099
+  [ ] Pino A1 - vai pro pino 11 do CD4099
+  [ ] Pino A2 - vai pro pino 12 do CD4099
+  [ ] Pino DATA - vai pro pino 13 do CD4099
+  [ ] Pino WE - vai pro pino 1 do CD4099
+  [ ] Pino RESET - vai pro pino 9 do CD4099
+  [ ] Pino VCC potência - vai pros coletores dos TIP100
+
+  Use o lado de solda (imagem 3) para traçar as trilhas visualmente.
+
+============================================================

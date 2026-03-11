@@ -1,0 +1,155 @@
+============================================================
+  LIGACOES - ARDUINO MEGA 2560 → PLACA F211 (8H)
+  Entradas Isoladas - 8x TIL113 + SCL4068BE
+============================================================
+
+  ATENCAO: Antes de ligar, mapear com MULTIMETRO (continuidade)
+  os pinos do conector de borda ate os pinos dos TIL113!
+
+============================================================
+1. SAIDAS ARDUINO → LEDs dos TIL113 (via resistor 1K)
+============================================================
+
+  O Arduino SIMULA sensores: HIGH = sensor ativado
+
+  MEGA Pin 22 ──[1K]──► Anodo LED TIL113-0 (CH0)
+  MEGA Pin 23 ──[1K]──► Anodo LED TIL113-1 (CH1)
+  MEGA Pin 24 ──[1K]──► Anodo LED TIL113-2 (CH2)
+  MEGA Pin 25 ──[1K]──► Anodo LED TIL113-3 (CH3)
+  MEGA Pin 26 ──[1K]──► Anodo LED TIL113-4 (CH4)
+  MEGA Pin 27 ──[1K]──► Anodo LED TIL113-5 (CH5)
+  MEGA Pin 28 ──[1K]──► Anodo LED TIL113-6 (CH6)
+  MEGA Pin 29 ──[1K]──► Anodo LED TIL113-7 (CH7)
+
+  Catodos dos LEDs TIL113 → GND (via edge connector)
+
+  TIL113 pinagem (DIP-6):
+    Pino 1 = Anodo LED (+)
+    Pino 2 = Catodo LED (-) → GND
+    Pino 3 = NC
+    Pino 4 = Emissor fototransistor → GND
+    Pino 5 = Coletor fototransistor → SAIDA
+    Pino 6 = Base fototransistor (NC)
+
+============================================================
+2. ENTRADAS ARDUINO ← Fototransistores TIL113 (com pullup)
+============================================================
+
+  Para CADA canal:
+
+     +5V ──[4K7]──┬── Coletor TIL113 ──► MEGA Pin
+                   │
+            (se placa ja tem pullup interno, nao precisa)
+
+  Canal    TIL113     Mega Pin    Leitura
+  ─────    ──────     ────────    ───────
+  CH0      TIL113-0   Pin 30     LED OFF=HIGH, LED ON=LOW
+  CH1      TIL113-1   Pin 31     LED OFF=HIGH, LED ON=LOW
+  CH2      TIL113-2   Pin 32     LED OFF=HIGH, LED ON=LOW
+  CH3      TIL113-3   Pin 33     LED OFF=HIGH, LED ON=LOW
+  CH4      TIL113-4   Pin 34     LED OFF=HIGH, LED ON=LOW
+  CH5      TIL113-5   Pin 35     LED OFF=HIGH, LED ON=LOW
+  CH6      TIL113-6   Pin 36     LED OFF=HIGH, LED ON=LOW
+  CH7      TIL113-7   Pin 37     LED OFF=HIGH, LED ON=LOW
+
+  LOGICA:
+    LED desligado → fototransistor OFF → coletor HIGH (pullup)
+    LED ligado    → fototransistor ON  → coletor LOW  (saturado)
+
+============================================================
+3. SAIDA NAND (SCL4068BE) → ARDUINO
+============================================================
+
+  SCL4068BE saida ────► MEGA Pin 38
+
+  Logica NAND 8 entradas:
+    Todos coletores HIGH (LEDs OFF) → NAND = LOW
+    Qualquer coletor LOW (LED ON)   → NAND = HIGH
+
+============================================================
+4. BOTAO DE EMERGENCIA
+============================================================
+
+  MEGA Pin 2 ───┬───► Botao ───► GND
+                 │
+           (pullup interno ativado no codigo)
+
+  Pressionar = desliga todas as saidas imediatamente
+
+============================================================
+5. ALIMENTACAO
+============================================================
+
+     ┌────────────────┐
+     │ Fonte Bancada  │
+     │ Canal 1: +5V   │──► VCC placa (SCL4068 + pullups)
+     │ Limite: 200mA  │    (placa consome ~50mA)
+     │                 │
+     │ GND             │──► GND placa + GND Mega
+     └────────────────┘
+
+     Arduino Mega alimenta pelo USB (5V separado)
+
+  NOTA: Esta placa NAO precisa de 12V ou 24V!
+  Os LEDs dos TIL113 funcionam com 5V + resistor 1K (~5mA)
+
+============================================================
+6. ESQUEMA COMPLETO DA BANCADA
+============================================================
+
+  ┌─────────┐  8 fios   ┌──────────┐  8 fios   ┌──────────┐
+  │         │  laranja   │ Resisto- │  laranja   │          │
+  │ Arduino ├───────────►│ res 1K   ├───────────►│  Placa   │
+  │ MEGA    │  (D22-29)  │ (proto-  │            │  F211    │
+  │         │            │  board)  │            │  (8H)    │
+  │         │  8 fios    │          │            │          │
+  │         │◄───────────┤──────────┤────────────┤          │
+  │         │  azul      │ Pullups  │  azul      │  TIL113  │
+  │         │  (D30-37)  │ 4K7→+5V │            │  saidas  │
+  │         │            └──────────┘            │          │
+  │         │  1 fio amarelo                     │ SCL4068  │
+  │         │◄───────────────────────────────────┤  NAND    │
+  │         │  (D38)                             │          │
+  └────┬────┘                                    └────┬─────┘
+       │                                              │
+       │    ┌────────┐       ┌────────┐               │
+       │    │ PC USB │       │ Fonte  │               │
+       └────┤ Serial │       │ +5V    ├───────────────┘
+            │ 115200 │       │ GND    │
+            └────────┘       └────────┘
+
+============================================================
+7. LISTA DE MATERIAL EXTERNO
+============================================================
+
+  [ ] 8x Resistor 1K ohm (1/4W) - marrom/preto/vermelho
+  [ ] 8x Resistor 4K7 ohm (1/4W) - amarelo/violeta/vermelho
+      (so se placa nao tem pullup interno)
+  [ ] 1x Protoboard pequena (para montar resistores)
+  [ ] ~20x Fios jumper macho-macho
+  [ ] 1x Botao NA (normalmente aberto) para emergencia
+  [ ] 1x Arduino Mega 2560 + cabo USB
+  [ ] 1x Fonte de bancada +5V
+
+============================================================
+8. PROCEDIMENTO DE TESTE
+============================================================
+
+  1. Mapear pinos do edge connector com multimetro
+  2. Conectar +5V e GND da fonte na placa
+  3. Conectar fios laranja (D22-29) via resistores 1K
+  4. Conectar fios azuis (D30-37) nos coletores
+  5. Conectar fio amarelo (D38) na saida NAND
+  6. Conectar GND comum
+  7. Upload do teste_f211_mega.ino no Arduino
+  8. Abrir Serial Monitor (115200 baud)
+  9. Pressionar 'T' para teste completo
+  10. Resultado: PASS ou FAIL para cada canal
+
+  Se algum canal FAIL:
+  - Verificar continuidade com multimetro
+  - Olhar trilhas na foto "Back 8H"
+  - Trocar TIL113 se confirmado defeito
+  - Verificar soldas (placa pegou chuva!)
+
+============================================================

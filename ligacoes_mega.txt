@@ -1,0 +1,125 @@
+============================================================
+  LIGAÇÕES - ARDUINO MEGA 2560 → PLACA INCAI KSF8S
+============================================================
+
+  ATENÇÃO: Antes de ligar, mapear com MULTÍMETRO (continuidade)
+  os pinos do conector de borda até os pinos do CD4099BE!
+
+============================================================
+1. CONTROLE (Mega → CD4099BE via conector de borda)
+============================================================
+
+  MEGA Pin 22 ─────────► A0    (CD4099 pino 10)
+  MEGA Pin 23 ─────────► A1    (CD4099 pino 11)
+  MEGA Pin 24 ─────────► A2    (CD4099 pino 12)
+  MEGA Pin 25 ─────────► DATA  (CD4099 pino 13)
+  MEGA Pin 26 ─────────► WE    (CD4099 pino 1)
+  MEGA Pin 27 ─────────► RESET (CD4099 pino 9) [opcional]
+  MEGA GND    ─────────► GND   (CD4099 pino 8)
+
+============================================================
+2. FEEDBACK (Coletor TIP100 → Mega via divisor tensão)
+============================================================
+
+  PARA 12V use: 10K + 4.7K  (saída ~3.8V)
+  PARA 24V use: 10K + 2.2K  (saída ~4.3V)
+
+  Para CADA canal (exemplo CH0):
+
+     Coletor TIP100 ───[10K]───┬───► MEGA Pin 30
+                               │
+                             [4.7K]
+                               │
+                              GND
+
+  Canal    TIP100     Mega Pin
+  ─────    ──────     ────────
+  CH0      T1/T2      Pin 30
+  CH1      T3/T4      Pin 31
+  CH2      T5/T6      Pin 32
+  CH3      T7/T8      Pin 33
+  CH4      T9/T10     Pin 34
+  CH5      T11/T12    Pin 35
+  CH6      T13/T14    Pin 36
+  CH7      T15/T16    Pin 37
+
+  NOTA: Sem o divisor de tensão, você QUEIMA o pino do Mega!
+        Se não quiser montar os divisores, não conecte os
+        feedbacks — o teste funciona sem (só sem diagnóstico).
+
+============================================================
+3. BOTÃO DE EMERGÊNCIA
+============================================================
+
+  MEGA Pin 2 ───┬───► Botão ───► GND
+                │
+          (pullup interno ativado no código)
+
+  Pressionar = desliga todas as saídas imediatamente
+
+============================================================
+4. CARGAS DE TESTE (nos coletores dos TIP100)
+============================================================
+
+  OPÇÃO A - LEDs (mais simples):
+
+     +12V ──[1K]──[LED]──► Coletor TIP100
+                            Emissor → GND
+
+  OPÇÃO B - Lâmpadas 12V automotivas (mais visual):
+
+     +12V ──[Lâmpada 12V]──► Coletor TIP100
+                              Emissor → GND
+
+  OPÇÃO C - Sem carga (só osciloscópio):
+
+     +12V ──[1K pullup]──┬──► Coletor TIP100
+                         │     Emissor → GND
+                         │
+                    Ponta Osciloscópio
+
+============================================================
+5. ALIMENTAÇÃO
+============================================================
+
+     ┌────────────────┐
+     │ Fonte Bancada  │
+     │ Canal 1: 5V    │──► VCC lógica placa (pino 16 CD4099)
+     │                │    (Mega alimentar via USB)
+     │ Canal 2: 12V   │──► VCC potência (coletores TIP100)
+     │ (limite 1A)    │
+     │ GND comum      │──► GND placa + GND Mega
+     └────────────────┘
+
+  IMPORTANTE: Limite de corrente no canal de 12V!
+  - Comece com 200mA
+  - Cada TIP100 com LED gasta ~15mA
+  - 8 canais = ~120mA com LEDs
+  - Com cargas reais, ajuste conforme necessidade
+
+============================================================
+6. ESQUEMA COMPLETO DA BANCADA
+============================================================
+
+  ┌─────────┐         ┌──────────────┐         ┌──────────┐
+  │         │  5 fios │              │ 8 cargas │          │
+  │ Arduino ├────────►│  Placa KSF8S ├─────────►│ LEDs ou  │
+  │ MEGA    │ controle│  INCAI       │ TIP100   │ Lâmpadas │
+  │         │         │              │          │          │
+  │         │◄────────┤              │          │          │
+  │         │ 8 fios  │              │          │          │
+  │         │ feedback│              │          │          │
+  └────┬────┘         └──────┬───────┘          └────┬─────┘
+       │                     │                       │
+       │    ┌────────┐       │      ┌────────┐       │
+       │    │ PC USB │       │      │ Fonte  │       │
+       │    │ Serial │       │      │ 5V+12V │       │
+       └────┤ Monitor│       └──────┤ Bancada│───────┘
+            └────────┘              └────────┘
+
+            ┌────────────┐
+            │ Hantek     │ CH1: pino WE ou DATA
+            │ 6022BE USB ├─── CH2: coletor TIP100
+            └────────────┘ GND: GND comum
+
+============================================================
